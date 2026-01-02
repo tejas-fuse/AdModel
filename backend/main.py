@@ -21,9 +21,10 @@ app = FastAPI(
 )
 
 # CORS middleware
+# TODO: In production, restrict allow_origins to specific trusted domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # For development only
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +38,30 @@ UPLOAD_DIR = "uploads"
 MODELS_DIR = "saved_models"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
+
+# Configuration
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def validate_image_file(filename: str, file_size: int = 0) -> tuple[bool, str]:
+    """
+    Validate uploaded image file
+    Returns: (is_valid, error_message)
+    """
+    if not filename:
+        return False, "No filename provided"
+    
+    # Check file extension
+    file_ext = os.path.splitext(filename.lower())[1]
+    if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return False, f"Invalid file type. Allowed types: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+    
+    # Check file size if provided
+    if file_size > MAX_FILE_SIZE:
+        return False, f"File size exceeds maximum allowed size of {MAX_FILE_SIZE / (1024*1024):.0f} MB"
+    
+    return True, ""
 
 
 class ModelConfig(BaseModel):
@@ -152,12 +177,25 @@ async def create_model(
         # Handle product image upload
         image_path = None
         if product_image:
+            # Validate file
+            is_valid, error_msg = validate_image_file(product_image.filename)
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            # Read file content first to check size
+            content = await product_image.read()
+            if len(content) > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"File size exceeds maximum allowed size of {MAX_FILE_SIZE / (1024*1024):.0f} MB"
+                )
+            
+            # Use secure file extension
+            file_ext = os.path.splitext(product_image.filename.lower())[1]
             image_id = str(uuid.uuid4())
-            image_ext = os.path.splitext(product_image.filename)[1]
-            image_path = os.path.join(UPLOAD_DIR, f"{image_id}{image_ext}")
+            image_path = os.path.join(UPLOAD_DIR, f"{image_id}{file_ext}")
             
             with open(image_path, "wb") as buffer:
-                content = await product_image.read()
                 buffer.write(content)
         
         # Create model configuration
@@ -249,13 +287,25 @@ async def use_model_with_product(
         if not model:
             raise HTTPException(status_code=404, detail="Model not found")
         
-        # Save new product image
+        # Validate file
+        is_valid, error_msg = validate_image_file(product_image.filename)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # Read file content first to check size
+        content = await product_image.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File size exceeds maximum allowed size of {MAX_FILE_SIZE / (1024*1024):.0f} MB"
+            )
+        
+        # Save new product image with secure extension
+        file_ext = os.path.splitext(product_image.filename.lower())[1]
         image_id = str(uuid.uuid4())
-        image_ext = os.path.splitext(product_image.filename)[1]
-        image_path = os.path.join(UPLOAD_DIR, f"{image_id}{image_ext}")
+        image_path = os.path.join(UPLOAD_DIR, f"{image_id}{file_ext}")
         
         with open(image_path, "wb") as buffer:
-            content = await product_image.read()
             buffer.write(content)
         
         return JSONResponse({

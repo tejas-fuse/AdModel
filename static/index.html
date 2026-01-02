@@ -502,7 +502,9 @@
     </div>
 
     <script>
-        // API base URL
+        // API base URL - empty string for same-origin requests
+        // For production deployment, configure this to point to your API server
+        // Example: const API_BASE = 'https://api.admodel.com';
         const API_BASE = '';
 
         // Initialize
