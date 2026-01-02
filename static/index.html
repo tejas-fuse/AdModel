@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdModel - AI Virtual Model Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .models-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .model-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s;
+        }
+
+        .model-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .model-item h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .model-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .model-detail {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .model-detail strong {
+            color: #333;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .model-actions button {
+            flex: 1;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            border-left: 5px solid #28a745;
+        }
+
+        .notification.error {
+            border-left: 5px solid #dc3545;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+            background: #f8f9fa;
+        }
+
+        .file-upload:hover {
+            background: #e9ecef;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload-text {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .preview-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .preview-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+        }
+
+        .close {
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 AdModel</h1>
+            <p>AI-Powered Virtual Model Creator for Advertisements</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Create Model Section -->
+            <div class="card">
+                <h2>Create Virtual Model</h2>
+                <form id="modelForm">
+                    <div class="form-group">
+                        <label for="modelName">Model Name *</label>
+                        <input type="text" id="modelName" name="name" required placeholder="e.g., Fashion Model 1">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender">Gender *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="non-binary">Non-Binary</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="age">Age *</label>
+                            <input type="number" id="age" name="age" required min="18" max="80" placeholder="25">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ethnicity">Ethnicity *</label>
+                            <select id="ethnicity" name="ethnicity" required>
+                                <option value="">Select Ethnicity</option>
+                                <option value="caucasian">Caucasian</option>
+                                <option value="african">African</option>
+                                <option value="asian">Asian</option>
+                                <option value="hispanic">Hispanic</option>
+                                <option value="middle-eastern">Middle Eastern</option>
+                                <option value="mixed">Mixed</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="skinColor">Skin Color *</label>
+                            <select id="skinColor" name="skin_color" required>
+                                <option value="">Select Skin Color</option>
+                                <option value="fair">Fair</option>
+                                <option value="light">Light</option>
+                                <option value="medium">Medium</option>
+                                <option value="olive">Olive</option>
+                                <option value="tan">Tan</option>
+                                <option value="brown">Brown</option>
+                                <option value="dark-brown">Dark Brown</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hairColor">Hair Color *</label>
+                            <select id="hairColor" name="hair_color" required>
+                                <option value="">Select Hair Color</option>
+                                <option value="black">Black</option>
+                                <option value="brown">Brown</option>
+                                <option value="blonde">Blonde</option>
+                                <option value="red">Red</option>
+                                <option value="gray">Gray</option>
+                                <option value="white">White</option>
+                                <option value="dyed">Dyed/Colorful</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bodyType">Body Type *</label>
+                            <select id="bodyType" name="body_type" required>
+                                <option value="">Select Body Type</option>
+                                <option value="slim">Slim</option>
+                                <option value="athletic">Athletic</option>
+                                <option value="average">Average</option>
+                                <option value="curvy">Curvy</option>
+                                <option value="plus-size">Plus Size</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="height">Height *</label>
+                        <select id="height" name="height" required>
+                            <option value="">Select Height</option>
+                            <option value="short">Short (< 5'4" / 163cm)</option>
+                            <option value="average">Average (5'4" - 5'9" / 163-175cm)</option>
+                            <option value="tall">Tall (> 5'9" / 175cm)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="poseDescription">Pose Description *</label>
+                        <textarea id="poseDescription" name="pose_description" required placeholder="Describe the pose you want... e.g., 'Standing confidently with hands on hips, slight smile, looking at camera'"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Image (Optional)</label>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" id="productImage" name="product_image" accept="image/*">
+                            <div class="file-upload-text">
+                                📷 Click or drag to upload product image
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="createBtn">
+                        Create Virtual Model
+                    </button>
+                </form>
+            </div>
+
+            <!-- Saved Models Section -->
+            <div class="card">
+                <h2>Saved Models</h2>
+                <div id="modelsList" class="models-list">
+                    <div class="empty-state">
+                        <span style="font-size: 3em;">📋</span>
+                        <p>No saved models yet. Create your first virtual model!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Model Modal -->
+    <div id="useModelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Use Model with New Product</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="useModelForm">
+                <input type="hidden" id="selectedModelId">
+                <div class="form-group">
+                    <label>Upload New Product Image *</label>
+                    <div class="file-upload" id="modalFileUpload">
+                        <input type="file" id="modalProductImage" name="product_image" accept="image/*" required>
+                        <div class="file-upload-text">
+                            📷 Click or drag to upload product image
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Generate Advertisement
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // API base URL - empty string for same-origin requests
+        // For production deployment, configure this to point to your API server
+        // Example: const API_BASE = 'https://api.admodel.com';
+        const API_BASE = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModels();
+            setupFileUploads();
+        });
+
+        // Setup file upload interactions
+        function setupFileUploads() {
+            const fileUpload = document.getElementById('fileUpload');
+            const fileInput = document.getElementById('productImage');
+            
+            fileUpload.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    fileUpload.querySelector('.file-upload-text').textContent = 
+                        `✓ ${e.target.files[0].name}`;
+                }
+            });
+
+            const modalFileUpload = document.getElementById('modalFileUpload');
+            const modalFileInput = document.getElementById('modalProductImage');
+            
+            modalFileUpload.addEventListener('click', () => modalFileInput.click());
+            modalFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    modalFileUpload.querySelector('.file-upload-text').textContent = 
+                        `✓ ${e.target.files[0].name}`;
+                }
+            });
+        }
+
+        // Form submission
+        document.getElementById('modelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('createBtn');
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading"></span> Creating...';
+            btn.disabled = true;
+
+            try {
+                const formData = new FormData(e.target);
+                
+                const response = await fetch(`${API_BASE}/api/models/create`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Virtual model created successfully!', 'success');
+                    e.target.reset();
+                    document.querySelector('.file-upload-text').textContent = 
+                        '📷 Click or drag to upload product image';
+                    loadModels();
+                } else {
+                    showNotification('Error creating model', 'error');
+                }
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Load models
+        async function loadModels() {
+            try {
+                const response = await fetch(`${API_BASE}/api/models`);
+                const result = await response.json();
+
+                const modelsList = document.getElementById('modelsList');
+
+                if (result.models && result.models.length > 0) {
+                    modelsList.innerHTML = result.models.map(model => `
+                        <div class="model-item">
+                            <h3>${model.name}</h3>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Gender:</strong> ${model.gender}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Age:</strong> ${model.age}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Ethnicity:</strong> ${model.ethnicity}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Skin:</strong> ${model.skin_color}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Hair:</strong> ${model.hair_color}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Body Type:</strong> ${model.body_type}
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Height:</strong> ${model.height}
+                                </div>
+                            </div>
+                            <div class="model-detail" style="margin-top: 10px;">
+                                <strong>Pose:</strong> ${model.pose_description}
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-secondary" onclick="useModel('${model.id}')">
+                                    Use with Product
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteModel('${model.id}')">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    modelsList.innerHTML = `
+                        <div class="empty-state">
+                            <span style="font-size: 3em;">📋</span>
+                            <p>No saved models yet. Create your first virtual model!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+            }
+        }
+
+        // Delete model
+        async function deleteModel(modelId) {
+            if (!confirm('Are you sure you want to delete this model?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/models/${modelId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Model deleted successfully', 'success');
+                    loadModels();
+                } else {
+                    showNotification('Error deleting model', 'error');
+                }
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Use model with new product
+        function useModel(modelId) {
+            document.getElementById('selectedModelId').value = modelId;
+            document.getElementById('useModelModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('useModelModal').style.display = 'none';
+            document.getElementById('useModelForm').reset();
+            document.querySelector('#modalFileUpload .file-upload-text').textContent = 
+                '📷 Click or drag to upload product image';
+        }
+
+        // Use model form submission
+        document.getElementById('useModelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const modelId = document.getElementById('selectedModelId').value;
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/models/${modelId}/use-with-product`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Advertisement generated successfully!', 'success');
+                    closeModal();
+                } else {
+                    showNotification('Error generating advertisement', 'error');
+                }
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        });
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<strong>${type === 'success' ? '✓' : '✗'}</strong> ${message}`;
+            
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('useModelModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
